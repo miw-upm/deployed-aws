@@ -46,6 +46,7 @@ jobs:
           username: ${{ secrets.AWS_LIGHTSAIL_USER }}
           key: ${{ secrets.AWS_LIGHTSAIL_SSH_KEY }}
           script: |
+            echo ${{ secrets.GHCR_PERSONAL_ACCESS_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker stop ${{ env.ARTIFACT }}-app || true
             docker rm ${{ env.ARTIFACT }}-app || true
             docker rmi ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:latest || true
