@@ -1,11 +1,11 @@
-name: CD - GitHub Docker Packages & Deploy Render
+name: CD. Deploy to AWS ECS
 on:
   push:
     branches: [master-ecs]
 env:
   REPOSITORY: ${{ github.repository }}  # El mismo para GitHub & AWS ECR
   GHCR_URL: ghcr.io # GitHub Container Registry
-  AWS_ECR_URL: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+  AWS_ECR_URL: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION_ECS }}.amazonaws.com
 jobs:
   cd:
     name: Build & Push GitHub Package & Deploy on Render Docker Image
@@ -41,14 +41,15 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-      - name: Login in AWS ECR
+          aws-region: ${{ secrets.AWS_REGION_ECS }}
+      - name: Login to AWS
         uses: aws-actions/amazon-ecr-login@v2
       - name: Tag and Push AWS ECR
         run: |
           docker tag $REPOSITORY:$VERSION $AWS_ECR_URL/$REPOSITORY:latest
           docker push $AWS_ECR_URL/$REPOSITORY:latest
 
-      - name: Update ECS service
-        run: |
-          aws ecs update-service --cluster betca-cluster --service deployed-aws-ecs-service --force-new-deployment
+# Se debe subir en primer lugar el docker ak repositorio de AWS ECR
+#      - name: Update ECS service
+#        run: |
+#          aws ecs update-service --cluster betca-cluster --service deployed-aws-ecs-service --force-new-deployment
