@@ -1,47 +1,41 @@
 name: CD. Deploy to AWS Lightsail
 on:
   push:
-    branches: [master-lightsail]
-
-env:
-  REPOSITORY: ${{ github.repository }} # <user>/<repo>
-  GHCR_URL: ghcr.io # GitHub Container Registry
+    branches:
+      - master-lightsail
 
 jobs:
   cd:
-    name: Build & Push GitHub Package & Deploy on Render Docker Image
+    name: Build & Push GitHub Package & Deploy on on AWS Lightsail
     runs-on: ubuntu-22.04
     steps:
-      - name: Clone repository
+      - name: ⬇️ Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
+      - name: ☕ Set up Java
+        uses: actions/setup-java@v5
         with:
-          distribution: zulu
+          distribution: temurin
           java-version: 21
           cache: maven
 
-      - name: Extract version from pom.xml
-        id: get-version
+      - name: 🏷️ Extract GitHub Container Registry, repository (lowercase) & version from pom
         run: |
+          echo "GHCR_URL=ghcr.io" >> $GITHUB_ENV
+          echo "REPOSITORY=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+          echo "ARTIFACT=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV          
           echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
-          echo "ARTIFACT=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
-      - name: Login to GitHub Container Registry
+
+      - name: 📦 Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.GHCR_URL }}
           username: ${{ github.actor }}
-          # 1º Creación del Token de Acceso Personal
-          #    Cuenta de GitHub >> Developer settings >> Personal access tokens >> Tokens >> Generate new token
-          #    write:packages & read:packages & delete:packages & repo
-          # 2º Configuración de Secrets en GitHub
-          #    repositorio en GitHub >> settings >> secrets and variables >> actions >> new repository secret
           password: ${{ secrets.GHCR_PERSONAL_ACCESS_TOKEN }}
 
-      - name: Build & Push Docker image
+      - name: 🐳 Build & Push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -50,7 +44,7 @@ jobs:
             ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:${{ env.VERSION }}
             ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:latest
 
-      - name: Deploy to AWS Lightsail
+      - name: 🚀 Deploy on AWS Lightsail
         uses: appleboy/ssh-action@v1.2.1
         with:
           host: ${{ secrets.AWS_LIGHTSAIL_IP }}
@@ -58,8 +52,12 @@ jobs:
           key: ${{ secrets.AWS_LIGHTSAIL_SSH_KEY }}
           script: |
             echo ${{ secrets.GHCR_PERSONAL_ACCESS_TOKEN }} | docker login ${{ env.GHCR_URL }} -u ${{ github.actor }} --password-stdin
-            docker stop ${{ env.ARTIFACT }}-app || true
             docker rm ${{ env.ARTIFACT }}-app || true
-            docker rmi ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:latest || true
             docker pull ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:latest
-            docker run -d --name ${{ env.ARTIFACT }}-app --restart always -p 80:8080 ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:latest
+            docker run -d \
+              --name ${{ env.ARTIFACT }} \
+              --restart always \
+              --network betca \
+              -p 8080:8080 ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:latest
+            sleep 20
+            docker image prune --filter "until=12h" -f
