@@ -1,0 +1,49 @@
+name: CD. Deploy nginx to AWS Lightsail
+on:
+  push:
+    branches:
+      - nginx
+
+jobs:
+  cd:
+    name: Deploy Docker Nginx on AWS Lightsail
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📦Upload Nginx config on AWS Lightsail
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.AWS_LIGHTSAIL_IP }}
+          username: ${{ secrets.AWS_LIGHTSAIL_USER }}
+          key: ${{ secrets.AWS_LIGHTSAIL_SSH_KEY }}
+          source: "docs/nginx.conf"
+          target: "/tmp/nginx/"
+
+      - name: 🚀 Deploy Nginx on AWS Lightsail
+        uses: appleboy/ssh-action@v1.2.1
+        with:
+          host: ${{ secrets.AWS_LIGHTSAIL_IP }}
+          username: ${{ secrets.AWS_LIGHTSAIL_USER }}
+          key: ${{ secrets.AWS_LIGHTSAIL_SSH_KEY }}
+          script: |
+            # Colocar config Nginx
+            sudo mkdir -p /opt/nginx/conf.d
+            sudo mv /tmp/nginx/docs/nginx.conf /opt/nginx/conf.d/default.conf
+            sudo chmod 644 /opt/nginx/conf.d/default.conf
+            
+            docker rm -f nginx-gateway || true
+            docker run -d \
+              --name nginx-gateway \
+              --restart always \
+              --network betca \
+              -p 80:80 \
+              -v /opt/nginx/conf.d:/etc/nginx/conf.d:ro \
+              nginx:alpine
+
+            sleep 20
+            docker image prune --filter "until=12h" -f

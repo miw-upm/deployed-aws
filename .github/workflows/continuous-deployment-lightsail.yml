@@ -58,6 +58,6 @@ jobs:
               --name ${{ env.ARTIFACT }} \
               --restart always \
               --network betca \
-              -p 80:8080 ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:latest
+              ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:latest
             sleep 20
             docker image prune --filter "until=12h" -f
