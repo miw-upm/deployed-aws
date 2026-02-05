@@ -52,7 +52,7 @@ jobs:
           key: ${{ secrets.AWS_LIGHTSAIL_SSH_KEY }}
           script: |
             echo ${{ secrets.GHCR_PERSONAL_ACCESS_TOKEN }} | docker login ${{ env.GHCR_URL }} -u ${{ github.actor }} --password-stdin
-            docker rm ${{ env.ARTIFACT }} || true
+            docker rm -f ${{ env.ARTIFACT }} || true
             docker pull ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:latest
             docker run -d \
               --name ${{ env.ARTIFACT }} \
