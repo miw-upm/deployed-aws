@@ -52,12 +52,12 @@ jobs:
           key: ${{ secrets.AWS_LIGHTSAIL_SSH_KEY }}
           script: |
             echo ${{ secrets.GHCR_PERSONAL_ACCESS_TOKEN }} | docker login ${{ env.GHCR_URL }} -u ${{ github.actor }} --password-stdin
-            docker rm ${{ env.ARTIFACT }}-app || true
+            docker rm -f ${{ env.ARTIFACT }} || true
             docker pull ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:latest
             docker run -d \
               --name ${{ env.ARTIFACT }} \
               --restart always \
               --network betca \
-              -p 8080:8080 ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:latest
+              -p 80:8080 ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:latest
             sleep 20
             docker image prune --filter "until=12h" -f
