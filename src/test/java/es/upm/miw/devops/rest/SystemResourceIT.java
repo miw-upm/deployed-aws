@@ -1,16 +1,17 @@
 package es.upm.miw.devops.rest;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.web.reactive.server.WebTestClient;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.http.HttpStatus.OK;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -18,27 +19,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @TestPropertySource(locations = "classpath:test.properties")
 class SystemResourceIT {
     @Autowired
-    private WebTestClient webTestClient;
+    private TestRestTemplate restTemplate;
 
     @Test
     void testReadBadge() {
-        this.webTestClient
-                .get().uri(SystemResource.VERSION_BADGE)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(byte[].class)
-                .value(Assertions::assertNotNull)
-                .value(svg -> assertTrue(new String(svg).startsWith("<svg")));
+        ResponseEntity<String> response = restTemplate.getForEntity(SystemResource.SYSTEM + SystemResource.VERSION_BADGE, String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(OK);
+        assertThat(response.getBody())
+                .isNotNull()
+                .startsWith("<svg");
     }
 
     @Test
     void testReadInfo() {
-        this.webTestClient
-                .get().uri("/")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(String.class)
-                .value(Assertions::assertNotNull);
+        ResponseEntity<String> response = restTemplate.getForEntity(SystemResource.SYSTEM, String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(OK);
+        assertThat(response.getBody())
+                .isNotNull()
+                .isNotEmpty();
     }
 }
 
