@@ -55,11 +55,12 @@ jobs:
             docker rm -f ${{ env.ARTIFACT }} || true
             docker pull ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:latest
             
-            # -p 80:8080 \ si se quiere funcionar exponiendo el puerto 
+            # -p 8080:8080 \ si se quiere funcionar exponiendo el puerto 
             docker run -d \
               --name ${{ env.ARTIFACT }} \
               --restart always \
               --network betca \
+              -p 8080:8080 \
               ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:latest
             sleep 20
             docker image prune --filter "until=12h" -f
