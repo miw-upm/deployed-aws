@@ -15,7 +15,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 📦Upload Nginx config on AWS Lightsail
+      - name: 📦Upload Nginx config & renew SSL config on AWS Lightsail
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.AWS_LIGHTSAIL_IP }}
@@ -47,6 +47,7 @@ jobs:
               sudo chmod 644 /etc/cron.d/letsencrypt-renew
             fi
             
+            # reconstruye el contenedor
             docker rm -f nginx-gateway || true
             docker run -d \
               --name nginx-gateway \
