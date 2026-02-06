@@ -44,8 +44,6 @@ jobs:
               -p 80:80 \
               -p 443:443
               -v /opt/nginx/conf.d:/etc/nginx/conf.d:ro \
-              -v /opt/letsencrypt/www:/var/www/certbot \
-              -v /opt/letsencrypt/etc:/etc/letsencrypt \
               nginx:alpine
 
             sleep 20
