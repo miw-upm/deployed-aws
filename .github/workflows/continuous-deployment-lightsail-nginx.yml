@@ -21,7 +21,7 @@ jobs:
           host: ${{ secrets.AWS_LIGHTSAIL_IP }}
           username: ${{ secrets.AWS_LIGHTSAIL_USER }}
           key: ${{ secrets.AWS_LIGHTSAIL_SSH_KEY }}
-          source: "docs/nginx.conf"
+          source: "docs/nginx-http.conf"
           target: "/tmp/nginx/"
 
       - name: 🚀 Deploy Nginx on AWS Lightsail
