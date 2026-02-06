@@ -8,3 +8,11 @@ docker run --rm -v /opt/letsencrypt/etc:/etc/letsencrypt -v /opt/letsencrypt/www
 ```bash
 curl -I https://lightsail.miwupm.es
 ```
+
+### 3. Verificar script de renew
+```bash
+sudo /usr/local/bin/renew-letsencrypt.sh
+echo $?
+```
+
+

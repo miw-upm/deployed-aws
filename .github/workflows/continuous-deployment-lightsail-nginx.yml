@@ -21,7 +21,7 @@ jobs:
           host: ${{ secrets.AWS_LIGHTSAIL_IP }}
           username: ${{ secrets.AWS_LIGHTSAIL_USER }}
           key: ${{ secrets.AWS_LIGHTSAIL_SSH_KEY }}
-          source: "docs/nginx.conf,docs/renew-letsencrypt.sh"
+          source: "docs/lightsail-nginx.conf,docs/lightsail-renew-letsencrypt.sh"
           target: "/tmp/nginx/"
 
       - name: 🚀 Deploy Nginx on AWS Lightsail
@@ -34,14 +34,14 @@ jobs:
             set -e
             # Colocar config Nginx
             sudo mkdir -p /opt/nginx/conf.d
-            sudo mv /tmp/nginx/docs/nginx.conf /opt/nginx/conf.d/default.conf
+            sudo mv /tmp/nginx/docs/lightsail-nginx.conf /opt/nginx/conf.d/default.conf
             sudo chmod 644 /opt/nginx/conf.d/default.conf
             
             # Preparar LetsEncrypt dirs (no rompe si no hay SSL aún)
             sudo mkdir -p /opt/letsencrypt/etc /opt/letsencrypt/www
 
             # Instalar script de renovación + cron (idempotente)
-            sudo install -m 755 /tmp/nginx/docs/renew-letsencrypt.sh /usr/local/bin/renew-letsencrypt.sh
+            sudo install -m 755 /tmp/nginx/docs/lightsail-renew-letsencrypt.sh /usr/local/bin/renew-letsencrypt.sh
             if [ ! -f /etc/cron.d/letsencrypt-renew ]; then
               echo "10 3 * * * root /usr/local/bin/renew-letsencrypt.sh" | sudo tee /etc/cron.d/letsencrypt-renew >/dev/null
               sudo chmod 644 /etc/cron.d/letsencrypt-renew
