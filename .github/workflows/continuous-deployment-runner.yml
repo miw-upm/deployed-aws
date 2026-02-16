@@ -44,16 +44,17 @@ jobs:
             ghcr.io/${{ env.REPOSITORY }}:${{ env.VERSION }}
             ghcr.io/${{ env.REPOSITORY }}:latest
 
-      - name: 🚀 Configure AWS Credentials
+      - name: ☁️ Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION_RUNNER }}
 
-      - name: Login to AWS
+      - name: 🔑 Login to AWS
         uses: aws-actions/amazon-ecr-login@v2
-      - name: Tag and Push AWS ECR
+
+      - name: 🚀 Tag and Push AWS ECR
         run: |
           docker pull ghcr.io/$REPOSITORY:$VERSION
           docker tag ghcr.io/$REPOSITORY:$VERSION $AWS_ECR_URL/$REPOSITORY:latest
