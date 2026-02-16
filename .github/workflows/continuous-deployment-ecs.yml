@@ -62,4 +62,4 @@ jobs:
 
       - name: 🔄 Update ECS service
         run: |
-          aws ecs update-service --cluster betca-cluster --service deployed-aws-ecs-service --force-new-deployment
+          aws ecs update-service --cluster devops-cluster --service deployed-aws-ecs-service --force-new-deployment
