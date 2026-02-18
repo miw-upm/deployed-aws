@@ -1,7 +1,8 @@
 name: CD - GitHub Docker Packages & Deploy Render
 on:
   push:
-    branches: [master-render]
+    branches:
+      - master-render
 
 env:
   REPOSITORY: ${{ github.repository }}
@@ -12,47 +13,44 @@ jobs:
     name: Build & Push GitHub Package & Deploy on Render Docker Image
     runs-on: ubuntu-22.04
     steps:
-      - name: Clone repository
+      - name: ⬇️ Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
+      - name: ☕ Set up Java
+        uses: actions/setup-java@v5
         with:
-          distribution: zulu
+          distribution: temurin
           java-version: 21
           cache: maven
 
-      - name: Extract version from pom.xml
-        id: get-version
-        run: echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+      - name: 🏷️ Prepare container registry metadata (repository, artifact, version...)
+        run: |
+          echo "REPOSITORY=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+          echo "ARTIFACT=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV          
+          echo "VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
 
-      - name: Login to GitHub Container Registry
+      - name: 📦 Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.GHCR_URL }}
+          registry: ghcr.io
           username: ${{ github.actor }}
-          # 1º Creación del Token de Acceso Personal
-          #    Cuenta de GitHub >> Developer settings >> Personal access tokens >> Tokens >> Generate new token
-          #    write:packages & read:packages & delete:packages & repo
-          # 2º Configuración de Secrets en GitHub
-          #    repositorio en GitHub >> settings >> secrets and variables >> actions >> new repository secret
           password: ${{ secrets.GHCR_PERSONAL_ACCESS_TOKEN }}
 
-      - name: Build & Push Docker image
+      - name: 🐳 Build & Push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
           tags: |
-            ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:${{ env.VERSION }}
-            ${{ env.GHCR_URL }}/${{ env.REPOSITORY }}:latest
+            ghcr.io/${{ env.REPOSITORY }}:${{ env.VERSION }}
+            ghcr.io/${{ env.REPOSITORY }}:latest
 
-      - name: Deploy on Render
+      - name: 🚀 Deploy on Render
         # En Render, en el servicio Web, Settings >> Deploy Hook >>  copiar el token de acceso
         # En GitHub, en el repositorio, Settings >> Secrets and variables >> Actions >> definir la variable de entorno
-        # DEPLOY_HOOK_TOKEN con el token
+        # RENDER_DEPLOY_HOOK_TOKEN con el token
         run: |
           curl --fail -X POST "https://api.render.com/deploy/${{ secrets.RENDER_DEPLOY_HOOK_TOKEN }}" || { echo "Deployment failed"; exit 1; }
           echo "Deployment succeeded"
