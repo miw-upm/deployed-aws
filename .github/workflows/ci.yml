@@ -1,24 +1,25 @@
 name: CI
 on:
   push:
-    branches: [develop]
+    branches:
+      - develop
 
 jobs:
   devops:
     name: Test - Unit & Integration & SonarCloud Scan & Slack WebHook
     runs-on: ubuntu-22.04 # macos-latest macos-11 windows-2019 ubuntu-latest
     steps:
-      - name: Clone repository
+      - name: ⬇️ Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
+      - name: ☕ Set up Java
+        uses: actions/setup-java@v5
         with:
-          distribution: zulu
+          distribution: temurin
           java-version: 21
           cache: maven
 
-      - name: Unit & Integration Tests
-        run: mvn -B verify # -B: --batch-mode
+      - name: ✅ Unit & Integration Tests
+        run: mvn -B verify
